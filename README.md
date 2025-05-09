@@ -46,5 +46,8 @@ I also provide the DB schema at (server/db/db.sql) so you can insert it in postg
 * NodeJs Express
 * Postgress DB
 
-
+# Project Screenshots
+![alt text](/images/image.png)
+![alt text](/images/image-1.png)
+![alt text](/images/image-2.png)
 
