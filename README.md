@@ -8,10 +8,11 @@ A bank application made by vanilla Javascript and node js express, it has an acc
 
 
 ## Run the client
-Dont need specific commands just run using the code in browser.
+- CD client 
+- npm run client
 
 ## Run the server
-- CD Bankist-server 
+- CD server 
 - npm install
 - npm start
 
