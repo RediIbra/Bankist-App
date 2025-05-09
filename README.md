@@ -43,6 +43,8 @@ I also provide the DB schema so you can insert it in postgres DB
 * HTML
 * CSS
 * Vanilla JavaScript
+* NodeJs Express
+* Postgress DB
 
 
 
