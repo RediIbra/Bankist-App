@@ -1,45 +1,42 @@
 const express = require('express');
 const { Client } = require('pg');
 const cors = require('cors');
+const db = require('./db');
 
-// Initialize express
 const app = express();
 app.use(express.json());
 app.use(cors());
 
-// Initialize PostgreSQL client
-const client = new Client({
-  user: 'postgres',  // PostgreSQL user
-  host: 'localhost',  // Database host
-  database: 'postgres', // Database name
-  password: '1234',  // Your PostgreSQL password
-  port: 5432,  // Default PostgreSQL port
-});
+// const client = new Client({
+//   user: 'postgres',  // PostgreSQL user
+//   host: 'localhost',  // Database host
+//   database: 'postgres', // Database name
+//   password: '1234',  
+//   port: 5432,  
+// });
 
-// Connect to PostgreSQL
-client.connect()
-  .then(() => console.log("Connected to PostgreSQL"))
-  .catch(err => console.error("Connection error", err.stack));
+// client.connect()
+//   .then(() => console.log("Connected to PostgreSQL"))
+//   .catch(err => console.error("Connection error", err.stack));
 
 // Route to get all accounts
 app.get('/users', async (req, res) => {
   try {
-    const result = await client.query('SELECT * FROM users');
+    const result = await db.query('SELECT * FROM users');
     res.json(result.rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// Route to get user by ID
 app.get('/users/:username', async (req, res) => {
   const username = req.params.username;
   
   try {
-    const result = await client.query('SELECT * FROM users WHERE username = $1', [username]);
+    const result = await db.query('SELECT * FROM users WHERE username = $1', [username]);
     
     if (result.rows.length > 0) {
-      res.json(result.rows[0]); // Return the user data if found
+      res.json(result.rows[0]); 
     } else {
       res.status(404).json({ message: 'User not found' });
     }
@@ -50,13 +47,12 @@ app.get('/users/:username', async (req, res) => {
 });
 
 
-// Route to update a specific account
 app.put('/users/:id', async (req, res) => {
   const { id } = req.params;
   const { movements, movementsDates } = req.body;
 
   try {
-    const result = await client.query(
+    const result = await db.query(
       'UPDATE users SET movements = $1, movements_dates = $2 WHERE id = $3 RETURNING *',
       [movements, movementsDates, id]
     );
@@ -66,12 +62,11 @@ app.put('/users/:id', async (req, res) => {
   }
 });
 
-// Route to create a new account
 app.post('/users', async (req, res) => {
   const { owner, movements, movementsDates, interestRate, pin, currency, locale } = req.body;
 
   try {
-    const result = await client.query(
+    const result = await db.query(
       'INSERT INTO users (owner, movements, movements_dates, interest_rate, pin, currency, locale) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
       [owner, movements, movementsDates, interestRate, pin, currency, locale]
     );
@@ -81,22 +76,19 @@ app.post('/users', async (req, res) => {
   }
 });
 
-// Route to delete an account
 app.delete('/users/:id', async (req, res) => {
   const { id } = req.params;
   try {
-    await client.query('DELETE FROM users WHERE id = $1', [id]);
+    await db.query('DELETE FROM users WHERE id = $1', [id]);
     res.status(204).send();
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// Route to transfer between users
 app.post('/transfer', async (req, res) => {
   const { senderUsername, receiverUsername, amount } = req.body;
 
-  // Basic validation
   if (
     !senderUsername ||
     !receiverUsername ||
@@ -110,15 +102,13 @@ app.post('/transfer', async (req, res) => {
   }
 
   try {
-    // Start transaction
-    await client.query('BEGIN');
+    await db.query('BEGIN');
 
-    // Lock sender & receiver rows
-    const senderRes = await client.query(
+    const senderRes = await db.query(
       'SELECT movements FROM users WHERE username = $1 FOR UPDATE',
       [senderUsername]
     );
-    const receiverRes = await client.query(
+    const receiverRes = await db.query(
       'SELECT movements FROM users WHERE username = $1 FOR UPDATE',
       [receiverUsername]
     );
@@ -127,7 +117,6 @@ app.post('/transfer', async (req, res) => {
       throw { status: 404, message: 'Sender or receiver not found' };
     }
 
-    // Compute sender balance
     const senderMovs = senderRes.rows[0].movements || [];
     const balance = senderMovs.reduce((sum, m) => sum + parseFloat(m), 0);
     if (balance < amount) {
@@ -135,8 +124,7 @@ app.post('/transfer', async (req, res) => {
     }
 
     const now = new Date().toISOString();
-    // Subtract from sender
-    await client.query(
+    await db.query(
       `UPDATE users
          SET movements = array_append(movements, $1),
              movements_dates = array_append(movements_dates, $2)
@@ -144,7 +132,7 @@ app.post('/transfer', async (req, res) => {
       [ -amount, now, senderUsername ]
     );
     // Add to receiver
-    await client.query(
+    await db.query(
       `UPDATE users
          SET movements = array_append(movements, $1),
              movements_dates = array_append(movements_dates, $2)
@@ -152,10 +140,10 @@ app.post('/transfer', async (req, res) => {
       [  amount, now, receiverUsername ]
     );
 
-    await client.query('COMMIT');
+    await db.query('COMMIT');
     res.json({ message: 'Transfer successful' });
   } catch (err) {
-    await client.query('ROLLBACK');
+    await db.query('ROLLBACK');
     console.error('Transfer error:', err);
     res
       .status(err.status || 500)
@@ -163,8 +151,6 @@ app.post('/transfer', async (req, res) => {
   }
 });
 
-// POST /loan
-// Body: { username, amount }
 app.post('/loan', async (req, res) => {
   const { username, amount } = req.body;
 
@@ -175,10 +161,10 @@ app.post('/loan', async (req, res) => {
 
   try {
     // Start transaction
-    await client.query('BEGIN');
+    await db.query('BEGIN');
 
     // Lock user row
-    const userRes = await client.query(
+    const userRes = await db.query(
       'SELECT movements FROM users WHERE username = $1 FOR UPDATE',
       [username]
     );
@@ -195,7 +181,7 @@ app.post('/loan', async (req, res) => {
 
     // Append loan movement and date
     const now = new Date().toISOString();
-    await client.query(
+    await db.query(
       `UPDATE users
          SET movements = array_append(movements, $1),
              movements_dates = array_append(movements_dates, $2)
@@ -203,15 +189,15 @@ app.post('/loan', async (req, res) => {
       [amount, now, username]
     );
 
-    await client.query('COMMIT');
+    await db.query('COMMIT');
     // Return updated user
-    const updated = await client.query(
+    const updated = await db.query(
       'SELECT * FROM users WHERE username = $1',
       [username]
     );
     res.json(updated.rows[0]);
   } catch (err) {
-    await client.query('ROLLBACK');
+    await db.query('ROLLBACK');
     console.error('Loan error:', err);
     res
       .status(err.status || 500)
@@ -220,19 +206,15 @@ app.post('/loan', async (req, res) => {
 });
 
 
-// DELETE /users
-// Body: { username, pin }
 app.delete('/users', async (req, res) => {
   const { username, pin } = req.body;
 
-  // Validate
   if (!username || typeof pin !== 'number') {
     return res.status(400).json({ error: 'Invalid input' });
   }
 
   try {
-    // Verify user exists & PIN matches
-    const userRes = await client.query(
+    const userRes = await db.query(
       'SELECT pin FROM users WHERE username = $1',
       [username]
     );
@@ -243,8 +225,7 @@ app.delete('/users', async (req, res) => {
       return res.status(401).json({ error: 'Incorrect pin' });
     }
 
-    // Delete
-    await client.query(
+    await db.query(
       'DELETE FROM users WHERE username = $1',
       [username]
     );
@@ -258,7 +239,6 @@ app.delete('/users', async (req, res) => {
 
 
 
-// Start the server
 app.listen(3000, () => {
   console.log("Server running on http://localhost:3000");
 });

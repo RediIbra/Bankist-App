@@ -3,5 +3,9 @@
     "cors": "^2.8.5",
     "express": "^5.1.0",
     "pg": "^8.15.6"
-  }
+  },
+  "scripts": {
+  "start": "node index.js",
+  "dev": "nodemon index.js"
+}
 }
