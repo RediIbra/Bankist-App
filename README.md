@@ -31,7 +31,7 @@ Everything you need in a modern bank and more. · 100% digital bank · Watch you
 # Log in credentials :
 
 This is the template login details to use the bank functionality. The project does include backend but does not have an actual registration funcionality (We are inserting dummy data to DB).
-I also provide the DB schema so you can insert it in postgres DB
+I also provide the DB schema at (server/db/db.sql) so you can insert it in postgres DB
 
 | Username | UserId | Password |
 |----------|----------|----------|
