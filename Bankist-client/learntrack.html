@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link rel="stylesheet" href="styles/learntrack.css" />
+  <link rel="stylesheet" href="styles/homepage.css" />
+  <title>Finance Quiz</title>
+
+</head>
+<body>
+  <nav>
+    <a href="homepage.html" class="back-arrow">←Back to Homepage</a>
+    <img src="imageslogo.png" alt="Logo" class="logo" />
+  </nav>
+  
+  <h1 class="quiz-header">Test Your Finance Knowledge!</h1>
+
+  <div id="quiz-container"></div>
+
+  <!-- Modal -->
+  <div class="modal" id="modal">
+    <div class="modal-content">
+      <h2>Your Score</h2>
+      <p id="score-result"></p>
+      <div class="corrections" id="corrections"></div>
+      <div class="modal-buttons">
+        <button class="try-again" onclick="reloadQuiz()">Try Again</button>
+        <button class="cancel" onclick="closeModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Score and try again buttons when user clicks cancel -->
+  <div id="score-container" class="score-container" style="display: none;">
+    <p class="score-text" id="score-text"></p>
+    <div class="score-buttons">
+      <button class="try-again" onclick="reloadQuiz()">Try Again</button>
+    </div>
+  </div>
+    <script defer src="scripts/learnTrackScript.js"></script>
+</body>
+</html>
